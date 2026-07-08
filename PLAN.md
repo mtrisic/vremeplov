@@ -126,6 +126,18 @@ load a real 40-year-old cassette by playing it at the browser. The
 decoder's tolerance bands were built for exactly this signal; needs a
 streaming variant of `DecodeWAV` and a UI affordance. Pure demo value.
 
+### 6. Distribution polish
+
+- **TODO: sign + notarize the macOS release binaries** (and optionally
+  sign the Windows ones). Today they ship unsigned, so Gatekeeper
+  quarantines browser downloads and users must `xattr -d
+  com.apple.quarantine` or click through Privacy & Security (documented
+  in the README quickstart). Fixing it properly needs an Apple
+  Developer Program membership, a Developer ID Application certificate,
+  and `codesign` + `notarytool` steps (credentials as repo secrets) in
+  the `desktop-macos` release job. A Homebrew cask/formula would also
+  sidestep quarantine for `brew` users.
+
 ## Standing risks
 
 - **INT pulse width unknown**: assumption documented in AGENTS.md log 1; only

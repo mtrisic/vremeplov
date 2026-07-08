@@ -98,6 +98,18 @@ platform from the
 [releases page](https://github.com/mtrisic/vremeplov/releases) and run it —
 it boots straight to `READY`.
 
+> **macOS note**: the binaries aren't signed with an Apple Developer ID
+> or notarized (that costs money), so Gatekeeper quarantines browser
+> downloads. Unlock and run with:
+>
+> ```sh
+> chmod +x vremeplov-desktop_*_darwin_* && xattr -d com.apple.quarantine vremeplov-desktop_*_darwin_*
+> ```
+>
+> or allow it under *System Settings → Privacy & Security → "Open
+> Anyway"* after the first refusal. Windows SmartScreen may similarly
+> warn on first run ("More info" → "Run anyway").
+
 **From source** (requires [Go](https://go.dev/dl/)):
 
 ```sh
