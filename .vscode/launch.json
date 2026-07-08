@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "TUI (READY prompt)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/frontends/tui",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Headless boot",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/headless",
+      "args": [
+        "--frames", "100",
+        "--dump-frame", "/tmp/vremeplov-frame.png",
+        "--dump-mem", "/tmp/vremeplov-mem.bin"
+      ],
+      "console": "integratedTerminal"
+    }
+  ]
+}

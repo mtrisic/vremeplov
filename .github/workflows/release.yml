@@ -1,0 +1,126 @@
+# Release builds of the terminal and desktop frontends: push a v* tag
+# (or run the workflow manually) and the binaries land on a GitHub
+# release. The TUI cross-compiles everywhere from one runner; the
+# desktop frontend is cgo on linux/macOS, so it builds on two.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git describe needs tags
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: go.work.sum
+
+      - name: Test (core + tui)
+        run: |
+          (cd core && go test ./...)
+          (cd frontends/tui && go test ./...)
+
+      - name: Build release binaries
+        run: bash tools/build-tui.sh dist
+        env:
+          # On tag runs, name deliverables after the exact tag that
+          # triggered the release; otherwise the scripts fall back to
+          # git describe (tag if HEAD carries one, else commit hash).
+          VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+
+      - name: Upload artifacts (non-tag runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: vremeplov-tui
+          path: dist/*
+
+      - name: Publish release (tag runs)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+  desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git describe needs tags
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: go.work.sum
+
+      - name: Ebiten build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev \
+            libxrandr-dev libxxf86vm-dev libasound2-dev libwayland-dev \
+            libxkbcommon-dev pkg-config xvfb xauth
+
+      - name: Test
+        run: (cd frontends/desktop && go vet ./... && xvfb-run -a go test ./...)
+
+      - name: Build (linux/amd64 + windows/amd64)
+        run: bash tools/build-desktop.sh dist
+        env:
+          VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+
+      - name: Upload artifacts (non-tag runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: vremeplov-desktop-linux-windows
+          path: dist/*
+
+      - name: Publish release (tag runs)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+
+  desktop-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git describe needs tags
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: go.work.sum
+
+      - name: Test
+        run: (cd frontends/desktop && go vet ./... && go test ./...)
+
+      - name: Build (darwin/arm64 + darwin/amd64)
+        run: bash tools/build-desktop.sh dist
+        env:
+          VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+
+      - name: Upload artifacts (non-tag runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: vremeplov-desktop-macos
+          path: dist/*
+
+      - name: Publish release (tag runs)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

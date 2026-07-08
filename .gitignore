@@ -1,0 +1,23 @@
+.DS_Store
+*.actual.png
+*.actual.bin
+/web/main.wasm
+/headless
+/web/vremeplov.wasm
+/web/wasm_exec.js
+/frontends/wasm/wasm
+/frontends/tui/tui
+/cmd/headless/headless
+/dist/
+/.vscode/settings.json
+/site/
+/web/favicon-16.png
+/web/favicon-32.png
+/web/icon-256.png
+
+# Delve debug binaries (VSCode F5)
+__debug_bin*
+
+# Digitized cassette audio stays out of the repo — the committed .gtp
+# images (credits in examples/PROVENANCE.md) are the canonical form.
+/examples/*.wav

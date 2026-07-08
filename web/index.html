@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vremeplov — Galaksija</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<style>
+  body {
+    background: #111;
+    color: #ddd;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 24px 16px 16px;
+    margin: 0;
+  }
+  header { display: flex; align-items: center; gap: 14px; }
+  header img { height: 44px; image-rendering: pixelated; }
+  header h1 { margin: 0; }
+
+  /* The stage: emulator column, with the monitor docked beside it on
+     wide screens and wrapping below it on narrow ones. */
+  #stage {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+  }
+  #emu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 100%;
+  }
+  canvas {
+    width: 512px;
+    max-width: 100%;
+    aspect-ratio: 512 / 416;
+    height: auto;
+    image-rendering: pixelated;
+    background: #000;
+    border: 1px solid #333;
+  }
+
+  .controls { display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap; justify-content: center; }
+  fieldset {
+    border: 1px solid #333;
+    border-radius: 3px;
+    margin: 0;
+    padding: 6px 10px 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  legend { color: #777; font-size: 12px; padding: 0 5px; }
+  button, input, select { font-family: inherit; }
+  /* Uniform control height — the ⏪ emoji otherwise inflates its
+     button's line box. */
+  .controls button, .controls select {
+    height: 26px;
+    line-height: 1;
+    padding: 0 10px;
+  }
+  .controls select { padding: 0 4px; }
+  #gtp { max-width: 230px; }
+  #status { color: #8f8; min-height: 1.2em; text-align: center; }
+
+  #monpanel {
+    width: min(430px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  #monpanel[hidden] { display: none; }
+  #monpanel pre {
+    margin: 0;
+    background: #181818;
+    color: #ddd;
+    border: 1px solid #333;
+    padding: 8px;
+    font-size: 13px;
+    line-height: 1.3;
+    overflow-x: auto;
+  }
+  #monlog { height: 9em; overflow-y: auto; }
+  #moncmd {
+    background: #181818;
+    color: #ddd;
+    border: 1px solid #333;
+    padding: 6px 8px;
+  }
+
+  /* Compact hints: fill the horizontal space in columns instead of one
+     tall paragraph. */
+  .help {
+    color: #777;
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 4px 28px;
+    max-width: 1000px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .help b { color: #aaa; font-weight: bold; }
+  footer { color: #777; }
+  footer a, .help a { color: #6bf; }
+</style>
+</head>
+<body>
+<header>
+  <img src="icon-256.png" alt="Vremeplov logo">
+  <h1>Vremeplov — Galaksija</h1>
+</header>
+<div id="stage">
+  <div id="emu">
+    <canvas id="screen"></canvas>
+    <div class="controls">
+      <fieldset>
+        <legend>machine</legend>
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+        <button id="rewind" title="rewind 2 s — hold to keep rewinding">⏪ 2s</button>
+        <button id="shot" title="download the screen as a PNG">Shot</button>
+        <button id="sound" title="the cassette-port speaker — some games click and beep through the tape output">Sound</button>
+        <button id="monitor">Monitor</button>
+      </fieldset>
+      <fieldset>
+        <legend>tape</legend>
+        <input type="file" id="gtp" accept=".gtp,.wav">
+        <button id="reload">Reload</button>
+        <button id="record">Record</button>
+        <select id="recfmt" title="recording download format">
+          <option value="gtp">.gtp</option>
+          <option value="wav">.wav</option>
+        </select>
+      </fieldset>
+      <fieldset>
+        <legend>state</legend>
+        <button id="snapsave" title="download the machine state as a snapshot file">Save</button>
+        <button id="snapload" title="restore a downloaded snapshot">Load</button>
+        <input type="file" id="snapfile" accept=".gob" hidden>
+      </fieldset>
+    </div>
+    <div id="status">loading…</div>
+  </div>
+  <div id="monpanel" hidden>
+    <pre id="monstate"></pre>
+    <pre id="monlog"></pre>
+    <input id="moncmd" placeholder="monitor command — try help"
+           spellcheck="false" autocomplete="off">
+  </div>
+</div>
+<ul class="help">
+  <li><b>Type</b> at the READY prompt — Esc = Break, Backspace = Delete,
+    Tab = List — or <b>paste</b> a whole BASIC listing (Ctrl+V).</li>
+  <li><b>Tape</b>: picking a <code>.gtp</code> or digitized <code>.wav</code>
+    resets the machine, loads it, and RUNs it; <b>Reload</b> repeats that.</li>
+  <li><b>Reset</b> gives a fresh machine at READY and forgets the tape.</li>
+  <li><b>Monitor</b>: machine-language debugger — breakpoints, stepping,
+    disassembly; type <code>help</code> at its prompt. Keys go to the
+    machine unless the prompt has focus.</li>
+  <li><b>Record</b> captures SAVEs and downloads them as <code>.gtp</code>
+    or <code>.wav</code> audio.</li>
+  <li><b>State</b>: Save downloads the whole machine as a snapshot file;
+    Load resumes it exactly — even mid-game, even mid-tape-load.</li>
+  <li><b>Sound</b> is the cassette-port speaker trick: the Galaksija had
+    no sound chip, but games clicked and beeped through the tape output —
+    plug in the virtual speaker and hear it.</li>
+</ul>
+<footer>
+  <a href="https://github.com/mtrisic/vremeplov">Source on GitHub</a> · MIT
+</footer>
+<script src="wasm_exec.js"></script>
+<script>
+  const go = new Go();
+  WebAssembly.instantiateStreaming(fetch("vremeplov.wasm"), go.importObject)
+    .then((result) => go.run(result.instance))
+    .catch((err) => {
+      document.getElementById("status").textContent = "wasm load failed: " + err;
+    });
+</script>
+</body>
+</html>
