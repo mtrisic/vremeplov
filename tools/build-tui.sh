@@ -24,7 +24,9 @@ built=()
 for target in $TARGETS; do
     os=${target%/*}
     arch=${target#*/}
-    bin="vremeplov-tui_${VERSION}_${os}_${arch}"
+    label=$os # filename label: friendlier "macOS" instead of GOOS "darwin"
+    [ "$os" = darwin ] && label=macOS
+    bin="vremeplov-tui_${VERSION}_${label}_${arch}"
     [ "$os" = windows ] && bin="$bin.exe"
     echo "building $target -> $OUT/$bin"
     CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \

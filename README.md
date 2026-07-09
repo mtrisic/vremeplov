@@ -101,8 +101,8 @@ platform from the
 it boots straight to `READY`.
 
 > **macOS note**: the binaries aren't signed with an Apple Developer ID
-> or notarized (that costs money), so Gatekeeper quarantines browser
-> downloads. Unlock and run with:
+> or notarized, so Gatekeeper quarantines browser downloads. Unlock
+> and run with:
 >
 > ```sh
 > chmod +x vremeplov-desktop_*_darwin_* && xattr -d com.apple.quarantine vremeplov-desktop_*_darwin_*
@@ -351,8 +351,9 @@ its native architecture + `windows/amd64` (Ebiten needs no C compiler
 for Windows), a macOS host builds both `darwin` architectures. On tag
 releases every artifact is named after the tag itself.
 
-Binaries are named `vremeplov-<frontend>_<version>_<os>_<arch>` (version
-also via `--version`), with a `SHA256SUMS` file alongside. CI publishes
+Binaries are named `vremeplov-<frontend>_<version>_<os>_<arch>` (macOS
+spelled `macOS`, not `darwin`; version also via `--version`), with a
+`SHA256SUMS` file alongside. CI publishes
 everything to a GitHub release on every `v*` tag (the desktop matrix
 runs on ubuntu + macos runners), and deploys the web emulator + this
 page to GitHub Pages on every push to `main`.

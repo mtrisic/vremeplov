@@ -34,7 +34,9 @@ built=()
 for target in $TARGETS; do
     os=${target%/*}
     arch=${target#*/}
-    bin="vremeplov-desktop_${VERSION}_${os}_${arch}"
+    label=$os # filename label: friendlier "macOS" instead of GOOS "darwin"
+    [ "$os" = darwin ] && label=macOS
+    bin="vremeplov-desktop_${VERSION}_${label}_${arch}"
     cgo=1
     [ "$os" = windows ] && bin="$bin.exe" && cgo=0
     echo "building $target -> $OUT/$bin"
@@ -43,12 +45,14 @@ for target in $TARGETS; do
     built+=("$bin")
 done
 
+HOST_LABEL=linux
+[ "$(uname -s)" = Darwin ] && HOST_LABEL=macOS
 (
     cd "$OUT"
     if command -v sha256sum >/dev/null; then
         sha256sum "${built[@]}"
     else
         shasum -a 256 "${built[@]}"
-    fi > "vremeplov-desktop_${VERSION}_$(uname -s | tr '[:upper:]' '[:lower:]')_SHA256SUMS"
+    fi > "vremeplov-desktop_${VERSION}_${HOST_LABEL}_SHA256SUMS"
 )
 echo "done: $OUT"
