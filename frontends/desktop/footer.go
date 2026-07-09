@@ -102,6 +102,8 @@ func (g *Game) footerSpecs() []footSpec {
 		{"reload", "F7 reload", clrTape},
 		{"rec", "F8 " + rec, recClr},
 		{"mon", "F9 " + mon, clrShot},
+		{"paste", shortcutHint("V") + " paste", clrView},
+		{"copy", shortcutHint("C") + " copy", clrShot},
 		{"sound", "F1 " + sound, clrView},
 		{"full", "F10 " + view, clrView},
 		{"fullscr", "F11 fullscr", clrView},
@@ -176,6 +178,19 @@ func (g *Game) handleChrome() {
 	for key, id := range chromeKeys {
 		if inpututil.IsKeyJustPressed(key) {
 			g.chromeAction(id)
+			return
+		}
+	}
+	// Cmd/Ctrl+V and Cmd/Ctrl+C are clipboard shortcuts; the matrix
+	// scan swallows those chords (input.go), so REPT stays usable and
+	// Meta chords never type into the machine.
+	if modifierHeld() {
+		switch {
+		case inpututil.IsKeyJustPressed(ebiten.KeyV):
+			g.chromeAction("paste")
+			return
+		case inpututil.IsKeyJustPressed(ebiten.KeyC):
+			g.chromeAction("copy")
 			return
 		}
 	}
@@ -258,6 +273,10 @@ func (g *Game) chromeAction(id string) {
 		g.toggleRecording()
 	case "mon":
 		g.toggleMonitor()
+	case "paste":
+		g.pasteClipboard()
+	case "copy":
+		g.copyScreen()
 	case "full":
 		g.fullFrame = !g.fullFrame
 		g.screen = nil // recreate at the new geometry

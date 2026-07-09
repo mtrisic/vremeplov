@@ -89,15 +89,28 @@ func (h *keyHolder) releaseAll() {
 	h.suppress = 0
 }
 
+// modifierHeld reports a clipboard-shortcut modifier: Meta (Cmd) on
+// any platform, or Ctrl — which doubles as the Galaksija REPT key, so
+// only the V/C chords are stolen from it.
+func modifierHeld() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyMetaLeft) || ebiten.IsKeyPressed(ebiten.KeyMetaRight) ||
+		ebiten.IsKeyPressed(ebiten.KeyControlLeft) || ebiten.IsKeyPressed(ebiten.KeyControlRight)
+}
+
 // handleMachineKeys scans the mapped physical keys and feeds edges to
 // the holder. The Shift state at press time picks the character; the
 // release is by physical key, so layout-shifted characters let go
-// cleanly (the wasm frontend's event.code semantics).
+// cleanly (the wasm frontend's event.code semantics). Meta chords
+// never reach the machine, and Ctrl+V / Ctrl+C are the clipboard
+// shortcuts (Ctrl alone stays REPT).
 func (g *Game) handleMachineKeys() {
 	shift := ebiten.IsKeyPressed(ebiten.KeyShiftLeft) || ebiten.IsKeyPressed(ebiten.KeyShiftRight)
+	meta := ebiten.IsKeyPressed(ebiten.KeyMetaLeft) || ebiten.IsKeyPressed(ebiten.KeyMetaRight)
+	ctrl := ebiten.IsKeyPressed(ebiten.KeyControlLeft) || ebiten.IsKeyPressed(ebiten.KeyControlRight)
 	for _, k := range scanKeys {
 		if inpututil.IsKeyJustPressed(k) {
-			if s, ok := strokesFor(k, shift); ok {
+			swallowed := meta || (ctrl && (k == ebiten.KeyV || k == ebiten.KeyC))
+			if s, ok := strokesFor(k, shift); ok && !swallowed {
 				g.keys.down(k, s)
 			}
 		}

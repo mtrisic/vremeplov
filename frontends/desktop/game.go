@@ -39,6 +39,7 @@ type Game struct {
 	keys     *keyHolder
 	aud      *audioPipe
 	player   *audio.Player
+	clip     clipper
 	lastTape []byte // current tape image, for F7 reload
 
 	confirmQuit bool // window close / quit button awaits confirmation
@@ -55,6 +56,7 @@ func newGame(m *core.Machine) *Game {
 		pix:    make([]byte, core.FrameWidth*core.FrameHeight),
 		status: "READY — drop a .gtp or .wav on the window to load it",
 		keys:   newKeyHolder(m),
+		clip:   systemClipboard{},
 	}
 }
 
