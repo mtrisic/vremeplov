@@ -24,12 +24,12 @@ history required.
 - Deterministic execution: same ROMs + same (timestamped) inputs ⇒ byte-identical
   results. All automated tests rely on this.
 - Headless operation from day zero as the primary test harness.
-- Frontends: headless runner, interactive terminal (bubbletea), web (WASM/canvas).
+- Frontends: headless runner, interactive terminal (bubbletea), web
+  (WASM/canvas), desktop GUI (Ebiten).
 
 **Non-goals (optional future work — see PLAN.md)**
 
 - A fast character-buffer renderer (must not shape the architecture).
-- Desktop GUI frontend.
 
 ## 2. Fixed decisions
 
@@ -277,8 +277,9 @@ provenance note must state this plainly.
 
 ### 4.1 Module layout
 
-Go workspace (`go.work`, **committed** — development happens only in the
-devcontainer so the gozilog replace path is stable; commit `go.work.sum` too).
+Go workspace (`go.work`, **committed**, with `go.work.sum`; it carries
+no replace directives — gozilog comes from GitHub as a tagged module,
+and the intra-repo modules resolve relatively via their own `go.mod`s).
 Because the `vremeplov/*` module paths are unpublished until the repo goes up,
 builds/`go mod tidy` only work under the workspace — this is by design.
 
@@ -437,8 +438,10 @@ All external inputs enter as T-state-stamped events. Golden frames are PNGs
   Galaksija uses IM1, so the optional `IntAcker` is not needed (default `0xFF`
   bus read is correct). The TUI monitor additionally uses `z80/disasm`
   (gozilog ≥ v1.1.0) for its disassembly window and step-over lengths.
-- During co-dev: `go.work` has `replace github.com/mtrisic/gozilog =>
-  /workspaces/gozilog` (the devcontainer bind-mounts the sibling checkout there).
+- gozilog is consumed as a normal tagged module from
+  `github.com/mtrisic/gozilog`. For co-development, point an
+  **uncommitted** `go work edit -replace github.com/mtrisic/gozilog=…`
+  at a local checkout; nothing replace-related is ever committed.
   After the basic concepts are proven: pin by commit SHA in `core/go.mod`, drop
   the replace and the mount requirement.
 - Never hack around or vendor-patch a gozilog gap. Propose a gozilog change,
@@ -633,9 +636,6 @@ A result reported from a host toolchain does not count.
 - **devcontainer.json**: `golang.go` extension; zsh via the `common-utils`
   feature exactly as in the project brief; mounts:
   - `source=devcontainer-zsh-history,target=/commandhistory,type=volume`
-  - `source=${localWorkspaceFolder}/../gozilog,target=/workspaces/gozilog,type=bind`
-    — co-dev requires a gozilog checkout as a **sibling directory** of vremeplov
-    (README documents this; the mount becomes optional once gozilog is pinned).
 - **WASM testing**: `tools/check-wasm.sh` runs `GOOS=js GOARCH=wasm go test`
   for `core` (portability proof) and the wasm module's testable logic under Node
   using `$(go env GOROOT)/lib/wasm/wasm_exec.js`.

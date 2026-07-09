@@ -17,20 +17,27 @@ reviewed before the next began. What exists today:
   ROM-measured pulse timing plus a SAVE recorder (capture back to GTP)
   and a WAV codec (digitized-cassette input, audio export), TypeText,
   snapshots, determinism guarantees.
-- `core/gtp/` — GTP cassette-image parser.
+- `core/gtp/` — GTP cassette-image parser; `core/loader/` — the shared
+  tape-image → running-program glue (wasm + desktop); `core/monitor` —
+  the shared debugger engine every live frontend embeds.
 - `cmd/headless` — the primary harness: frame/memory dumps, key scripts,
   tape/fast-load/typed program input, snapshots; golden-tested.
 - `frontends/tui` — bubbletea frontend with adaptive renderers
   (half-block/quadrant/braille/text/scaled), sticky keys, Ctrl+X chrome,
-  and the monitor: a machine-language debugger panel (breakpoints,
+  clipboard (bracketed paste in, OSC 52 screen-text copy out), and the
+  monitor: a machine-language debugger panel (breakpoints,
   watchpoints, stepping, disassembly via gozilog `z80/disasm`, hex
   dump/poke) on top of core's debug API (`RunDebug`).
 - `frontends/wasm` + `web/` — browser frontend (canvas, keyboard,
-  `.gtp` picker, transport controls, tape recording with download, and
-  the same monitor/debugger panel via the shared `core/monitor` engine).
+  `.gtp` picker, transport controls, paste-to-type, tape recording with
+  download, and the same monitor/debugger panel via the shared
+  `core/monitor` engine).
 - `frontends/desktop` — native Ebiten GUI (window, sound by default,
-  drag-and-drop tapes, footer chrome, docked monitor); the only cgo
-  module, gated by `tools/check-desktop.sh` under xvfb.
+  drag-and-drop tapes, system-clipboard copy-paste, footer chrome,
+  docked monitor); the only cgo module, gated by
+  `tools/check-desktop.sh` under xvfb.
+- `examples/` — BASIC listings plus preserved `.gtp` games
+  (credits/provenance in `examples/PROVENANCE.md`).
 - CI: release binaries on `v*` tags (TUI cross-compiled; desktop built
   on ubuntu + macos runners), GitHub Pages (landing page +
   `/galaksija/` emulator) on pushes to `main`.
@@ -58,7 +65,7 @@ docker exec vremeplov-dev-ct <cmd>
 Ordered roughly by recommended sequence; each would run as its own planned,
 gated feature like the monitor/recorder/WAV work before it.
 
-### 1. Usability batch (sound · paste · warp · snapshots · screenshots)
+### 1. Usability batch (sound · copy-paste · warp · snapshots · screenshots)
 
 Five small features sharing the frame-loop and chrome/controls plumbing:
 
@@ -66,10 +73,13 @@ Five small features sharing the frame-loop and chrome/controls plumbing:
   `RenderAudio(rate)` pull the tape-out DAC as a deterministic mono
   sample stream (the single mixing point a Galaksija Plus AY-3-8910
   would join); web Sound button streams it to Web Audio as scheduled
-  buffers. TUI stays silent (terminals have no audio); a desktop
-  frontend would pull the same API.
-- ~~Paste-to-type (web)~~ — **done**: paste handler → `core.TypeText`
-  queue; text fields keep native paste; completion reported in status.
+  buffers; the desktop frontend pulls the same API (sound on by
+  default). TUI stays silent (terminals have no audio).
+- ~~Copy-paste~~ — **done**, grown from the planned web paste-to-type
+  into all three live frontends: web paste handler → `core.TypeText`
+  (text fields keep native paste); TUI bracketed paste in + `^X y`
+  OSC 52 screen-text copy out; desktop system clipboard both ways
+  (`atotto/clipboard`, Cmd/Ctrl+V/C).
 - **Warp speed**: run N emulated frames per real tick — a web button and
   a TUI chrome key; skip BASIC's slow moments. Pure frontend loop change.
 - ~~Snapshot UI~~ — **done**: TUI `^X w`/`^X l` write/load

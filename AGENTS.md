@@ -15,7 +15,10 @@ not work in the container, it is not done.
 
 gozilog is consumed as a normal tagged module from GitHub
 (`github.com/mtrisic/gozilog`); no local checkout is needed. WASM tests run
-via `tools/check-wasm.sh` (Node + `wasm_exec.js`).
+via `tools/check-wasm.sh` (Node + `wasm_exec.js`). The desktop frontend is
+the repo's only cgo module; its tests and builds run via
+`tools/check-desktop.sh` (xvfb-backed — Ebiten needs a display even for
+pure-logic tests on linux).
 
 ## Module purity
 

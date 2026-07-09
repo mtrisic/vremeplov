@@ -105,7 +105,7 @@ it boots straight to `READY`.
 > and run with:
 >
 > ```sh
-> chmod +x vremeplov-desktop_*_darwin_* && xattr -d com.apple.quarantine vremeplov-desktop_*_darwin_*
+> chmod +x vremeplov-desktop_*_macOS_* && xattr -d com.apple.quarantine vremeplov-desktop_*_macOS_*
 > ```
 >
 > or allow it under *System Settings → Privacy & Security → "Open
