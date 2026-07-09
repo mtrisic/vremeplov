@@ -68,6 +68,7 @@ func (mo *model) footerButtons() []footButton {
 		{"p", pause, "4"}, {"r", "reset", "4"}, {"b", "rewind", "5"},
 		{"t", rec, recColor}, {"w", "save", "8"}, {"l", "load", "8"},
 		{"m", mon, "6"}, {"d", "dump", "6"}, {"c", "shot", "6"},
+		{"y", "copy", "6"},
 		{"s", sticky, "2"}, {"v", "video", "2"}, {"f", full, "2"},
 		{"q", quit, "1"},
 	}

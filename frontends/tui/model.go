@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"strings"
@@ -51,6 +52,10 @@ type model struct {
 	// render, in view coordinates.
 	footHits []footHit
 
+	// clipOut receives OSC 52 clipboard escapes (the terminal's stdout;
+	// swapped for a buffer in tests).
+	clipOut io.Writer
+
 	pix []byte // scratch frame buffer
 }
 
@@ -64,6 +69,7 @@ func newModel(m *core.Machine) *model {
 		renderer: rendererBraille,
 		holds:    make(map[core.Key]uint64),
 		pix:      make([]byte, core.FrameWidth*core.FrameHeight),
+		clipOut:  os.Stdout,
 		status:   "^X + key, or click a button",
 	}
 }
@@ -149,13 +155,18 @@ func (mo *model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		mo.status = "quit cancelled"
 		return mo, nil
 	}
+	if msg.Paste {
+		mo.prefix = false
+		mo.pasteText(string(msg.Runes))
+		return mo, nil
+	}
 	if mo.prefix {
 		mo.prefix = false
 		return mo.chromeCommand(msg)
 	}
 	if msg.Type == tea.KeyCtrlX {
 		mo.prefix = true
-		mo.status = "^X: [q]uit [p]ause [r]eset [b]ack-2s [w]rite-snap [l]oad-snap [c]shot [d]ump [s]ticky [v]renderer [f]ull [m]onitor [t]ape-rec"
+		mo.status = "^X: [q]uit [p]ause [r]eset [b]ack-2s [w]rite-snap [l]oad-snap [c]shot [y]copy [d]ump [s]ticky [v]renderer [f]ull [m]onitor [t]ape-rec"
 		return mo, nil
 	}
 	if mo.mon.open {
@@ -263,6 +274,8 @@ func (mo *model) chromeAction(key string) (tea.Model, tea.Cmd) {
 		} else {
 			mo.status = "screenshot saved to " + name
 		}
+	case "y":
+		mo.copyScreen()
 	case "b":
 		if err := mo.m.Rewind(100 * core.TstatesPerFrame); err != nil {
 			mo.status = "rewind: " + err.Error()

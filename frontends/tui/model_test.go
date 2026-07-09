@@ -203,19 +203,22 @@ func TestModelViewRenders(t *testing.T) {
 	}
 	view := mo.View()
 	lines := strings.Split(view, "\n")
-	// 208 px / 4 px per row = 52 pixel rows + status line + three rows
-	// of bordered footer buttons (60 rows leave room for borders; 200
-	// columns fit all buttons on one row).
-	if len(lines) != 56 {
-		t.Fatalf("view has %d lines, want 56", len(lines))
+	// 208 px / 4 px per row = 52 pixel rows + status line + two wrapped
+	// rows of bordered footer buttons, three lines each (60 rows leave
+	// room for borders; 14 buttons no longer fit one 200-column row).
+	if len(lines) != 59 {
+		t.Fatalf("view has %d lines, want 59", len(lines))
 	}
 	if !strings.Contains(lines[52], "vremeplov") {
 		t.Fatalf("status line missing: %q", lines[52])
 	}
-	if !strings.Contains(lines[54], "pause") || !strings.Contains(lines[54], "quit") {
-		t.Fatalf("footer buttons missing: %q", lines[54])
+	if !strings.Contains(lines[54], "pause") {
+		t.Fatalf("first footer row missing pause: %q", lines[54])
 	}
-	if !strings.Contains(lines[53], "╭") || !strings.Contains(lines[55], "╰") {
+	if !strings.Contains(lines[57], "quit") {
+		t.Fatalf("second footer row missing quit: %q", lines[57])
+	}
+	if !strings.Contains(lines[53], "╭") || !strings.Contains(lines[58], "╰") {
 		t.Fatal("bordered buttons missing their frames")
 	}
 }
