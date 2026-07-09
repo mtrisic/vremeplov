@@ -19,9 +19,11 @@ test -f web/vremeplov.wasm || {
 }
 
 rm -rf "$OUT"
-mkdir -p "$OUT/galaksija"
+mkdir -p "$OUT/galaksija/examples"
 cp web/index.html web/vremeplov.wasm web/wasm_exec.js "$OUT/galaksija/"
 cp assets/logo/icon-256.png "$OUT/galaksija/"
+# The page's built-in example tapes (credits in examples/PROVENANCE.md).
+cp examples/*.gtp "$OUT/galaksija/examples/"
 cp -r assets "$OUT/assets"
 find "$OUT" -name .DS_Store -delete
 cp assets/logo/favicon-16.png assets/logo/favicon-32.png "$OUT/"

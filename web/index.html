@@ -21,9 +21,12 @@
   header { display: flex; align-items: center; gap: 14px; }
   header img { height: 44px; image-rendering: pixelated; }
   header h1 { margin: 0; }
+  header h1 a { color: inherit; text-decoration: none; }
+  header h1 a:hover { color: #6bf; }
 
-  /* The stage: emulator column, with the monitor docked beside it on
-     wide screens and wrapping below it on narrow ones. */
+  /* The stage: the machine screen with the monitor docked beside it on
+     wide screens, wrapping below it on narrow ones — always above the
+     status line and controls. */
   #stage {
     display: flex;
     flex-wrap: wrap;
@@ -31,13 +34,6 @@
     align-items: flex-start;
     gap: 16px;
     width: 100%;
-  }
-  #emu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    max-width: 100%;
   }
   canvas {
     width: 512px;
@@ -99,17 +95,19 @@
     padding: 6px 8px;
   }
 
-  /* Compact hints: fill the horizontal space in columns instead of one
-     tall paragraph. */
+  /* Compact hints: fill the horizontal space in columns, stacking one
+     below another when the screen is too narrow (min(…, 100%) keeps a
+     column from ever forcing the page wider than the viewport). */
   .help {
     color: #777;
     list-style: none;
     margin: 4px 0 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
     gap: 4px 28px;
     max-width: 1000px;
+    width: 100%;
     font-size: 13px;
     line-height: 1.4;
   }
@@ -121,40 +119,10 @@
 <body>
 <header>
   <img src="icon-256.png" alt="Vremeplov logo">
-  <h1>Vremeplov — Galaksija</h1>
+  <h1><a href="https://github.com/mtrisic/vremeplov">Vremeplov</a> — Galaksija</h1>
 </header>
 <div id="stage">
-  <div id="emu">
-    <canvas id="screen"></canvas>
-    <div class="controls">
-      <fieldset>
-        <legend>machine</legend>
-        <button id="pause">Pause</button>
-        <button id="reset">Reset</button>
-        <button id="rewind" title="rewind 2 s — hold to keep rewinding">⏪ 2s</button>
-        <button id="shot" title="download the screen as a PNG">Shot</button>
-        <button id="sound" title="the cassette-port speaker — some games click and beep through the tape output">Sound</button>
-        <button id="monitor">Monitor</button>
-      </fieldset>
-      <fieldset>
-        <legend>tape</legend>
-        <input type="file" id="gtp" accept=".gtp,.wav">
-        <button id="reload">Reload</button>
-        <button id="record">Record</button>
-        <select id="recfmt" title="recording download format">
-          <option value="gtp">.gtp</option>
-          <option value="wav">.wav</option>
-        </select>
-      </fieldset>
-      <fieldset>
-        <legend>state</legend>
-        <button id="snapsave" title="download the machine state as a snapshot file">Save</button>
-        <button id="snapload" title="restore a downloaded snapshot">Load</button>
-        <input type="file" id="snapfile" accept=".gob" hidden>
-      </fieldset>
-    </div>
-    <div id="status">loading…</div>
-  </div>
+  <canvas id="screen"></canvas>
   <div id="monpanel" hidden>
     <pre id="monstate"></pre>
     <pre id="monlog"></pre>
@@ -162,11 +130,51 @@
            spellcheck="false" autocomplete="off">
   </div>
 </div>
+<div id="status">loading…</div>
+<div class="controls">
+  <fieldset>
+    <legend>machine</legend>
+    <button id="pause">Pause</button>
+    <button id="reset">Reset</button>
+    <button id="rewind" title="rewind 2 s — hold to keep rewinding">⏪ 2s</button>
+    <button id="shot" title="download the screen as a PNG">Shot</button>
+    <button id="sound" title="the cassette-port speaker — some games click and beep through the tape output">Sound</button>
+    <button id="monitor">Monitor</button>
+  </fieldset>
+  <fieldset>
+    <legend>tape</legend>
+    <select id="examples" title="preserved Galaksija games from the repo's examples folder">
+      <option value="">examples…</option>
+      <option value="examples/JumpingJack.gtp">Jumping Jack</option>
+      <option value="examples/GalaktickiRat.gtp">Galaktički rat</option>
+      <option value="examples/Zamak.gtp">Zamak</option>
+      <option value="examples/Evolucija.gtp">Evolucija</option>
+      <option value="examples/Sintesajzer.gtp">Sintesajzer</option>
+      <option value="examples/Oscilacije.gtp">Oscilacije</option>
+      <option value="examples/Bioritam1.gtp">Bioritam 1</option>
+      <option value="examples/Monitor.gtp">Monitor</option>
+    </select>
+    <input type="file" id="gtp" accept=".gtp,.wav">
+    <button id="reload">Reload</button>
+    <button id="record">Record</button>
+    <select id="recfmt" title="recording download format">
+      <option value="gtp">.gtp</option>
+      <option value="wav">.wav</option>
+    </select>
+  </fieldset>
+  <fieldset>
+    <legend>state</legend>
+    <button id="snapsave" title="download the machine state as a snapshot file">Save</button>
+    <button id="snapload" title="restore a downloaded snapshot">Load</button>
+    <input type="file" id="snapfile" accept=".gob" hidden>
+  </fieldset>
+</div>
 <ul class="help">
   <li><b>Type</b> at the READY prompt — Esc = Break, Backspace = Delete,
     Tab = List — or <b>paste</b> a whole BASIC listing (Ctrl+V).</li>
-  <li><b>Tape</b>: picking a <code>.gtp</code> or digitized <code>.wav</code>
-    resets the machine, loads it, and RUNs it; <b>Reload</b> repeats that.</li>
+  <li><b>Tape</b>: pick one of the built-in <b>examples</b>, or your own
+    <code>.gtp</code> / digitized <code>.wav</code> — either resets the
+    machine, loads it, and RUNs it; <b>Reload</b> repeats that.</li>
   <li><b>Reset</b> gives a fresh machine at READY and forgets the tape.</li>
   <li><b>Monitor</b>: machine-language debugger — breakpoints, stepping,
     disassembly; type <code>help</code> at its prompt. Keys go to the
@@ -180,7 +188,10 @@
     plug in the virtual speaker and hear it.</li>
 </ul>
 <footer>
-  <a href="https://github.com/mtrisic/vremeplov">Source on GitHub</a> · MIT
+  All source code is on GitHub — visit
+  <a href="https://github.com/mtrisic/vremeplov">Vremeplov</a> or the
+  underlying <a href="https://github.com/mtrisic/gozilog">gozilog</a>
+  Z80 emulator · MIT
 </footer>
 <script src="wasm_exec.js"></script>
 <script>

@@ -164,6 +164,33 @@ func main() {
 	})
 	reloadBtn.Call("addEventListener", "click", onReload)
 
+	// Built-in example tapes: served next to the page (the repo's
+	// examples/ games — see examples/PROVENANCE.md), fetched and loaded
+	// exactly like a picked file.
+	exSel := doc.Call("getElementById", "examples")
+	onExampleResp := js.FuncOf(func(_ js.Value, args []js.Value) any {
+		resp := args[0]
+		if !resp.Get("ok").Bool() {
+			setStatus(fmt.Sprintf("example fetch failed: HTTP %d", resp.Get("status").Int()))
+			return nil
+		}
+		resp.Call("arrayBuffer").Call("then", onLoaded)
+		return nil
+	})
+	onExample := js.FuncOf(func(_ js.Value, _ []js.Value) any {
+		path := exSel.Get("value").String()
+		exSel.Set("value", "")
+		exSel.Call("blur")
+		if path == "" {
+			return nil
+		}
+		setStatus("fetching " + path + " …")
+		fileInput.Set("value", "") // the picker no longer owns the tape
+		js.Global().Call("fetch", path).Call("then", onExampleResp)
+		return nil
+	})
+	exSel.Call("addEventListener", "change", onExample)
+
 	// Reset: fresh machine at the READY prompt, picked file forgotten.
 	resetBtn := doc.Call("getElementById", "reset")
 	onReset := js.FuncOf(func(_ js.Value, _ []js.Value) any {
@@ -509,7 +536,9 @@ func main() {
 		} else {
 			openMonitor()
 			setStatus("monitor — paused; type help at its prompt")
-			monCmd.Call("focus")
+			// preventScroll: the panel docks beside the screen; focusing
+			// its input must not yank the page around.
+			monCmd.Call("focus", map[string]any{"preventScroll": true})
 		}
 		monBtn.Call("blur")
 		return nil
