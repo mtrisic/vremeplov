@@ -33,8 +33,10 @@
 - **Save states** — snapshot the whole machine to a file and resume it
   later, even mid-game or mid-tape-load; one format shared by the
   browser, desktop, terminal, and CLI.
-- **Paste-to-type** — paste a whole BASIC listing straight into the
-  machine (browser), or pipe one through the keyboard (headless).
+- **Copy & paste** — paste a whole BASIC listing straight into the
+  machine (browser, desktop, and terminal), copy the screen text back
+  out (desktop and terminal), or pipe a listing through the keyboard
+  (headless).
 
 <p align="center">
   <img src="assets/screenshots/Screenshot-vremeplov-galaksija-emulator-GUI-on-mac-native-v0.9.png"
@@ -145,7 +147,8 @@ the window in seconds at ~15 MB per minute, `0` disables) ·
 `t` tape recording (SAVE, then again to write
 the `.gtp`+`.wav`) · `w`/`l` save/load a snapshot
 (`vremeplov-snap-N.gob` in the current directory) · `c` screenshot
-(`vremeplov-shot-N.png`; follows the `f` full-frame toggle) · `m` monitor ·
+(`vremeplov-shot-N.png`; follows the `f` full-frame toggle) ·
+`y` copy the screen text to the clipboard · `m` monitor ·
 `d` dump 64 KB of memory to a file · `s` sticky keys (for games) ·
 `v` cycle renderer · `f` full frame (borders included). The buttons are
 color-coded by function where the terminal supports color, gain borders
@@ -159,6 +162,13 @@ breakpoints and memory watchpoints, stepping (`s`, step-over `n`, `to`,
 instruction and `rw` rewinds whole frames — plus hex dump/poke and watch
 expressions; type `help` at its prompt. Breakpoints keep working with
 the panel closed; a hit pauses the machine and reopens it.
+
+Clipboard, terminal style: **pasting into the terminal** (Cmd+V,
+middle-click — whatever your terminal uses) types the text straight
+into the machine, validated first, even over SSH; with the monitor
+open it lands on the REPL prompt instead. `Ctrl+X y` copies the screen
+text back out via OSC 52 — supported by iTerm2, kitty, WezTerm, tmux
+and friends (macOS Terminal.app ignores it).
 
 Built on the excellent [Bubble Tea](https://github.com/charmbracelet/bubbletea)
 TUI framework (with [Lip Gloss](https://github.com/charmbracelet/lipgloss)
@@ -187,6 +197,13 @@ F9 monitor (the same debugger as everywhere else, docked beside the
 screen) · F10 full frame · F11 fullscreen · F12 screenshot. Closing
 the window asks for confirmation first. Flags match the TUI
 (`--rom-a/--rom-b/--chargen/--ram/--rewind`).
+
+**Copy & paste**: `⌘V`/`Ctrl+V` types the clipboard into the machine
+(a whole BASIC listing works; with the monitor open it goes to the
+REPL prompt), `⌘C`/`Ctrl+C` copies the screen text out — both also
+live on footer buttons. Ctrl otherwise stays the Galaksija REPT key;
+only those two chords are stolen. On Linux the clipboard needs
+`xclip` or `xsel` installed.
 
 Building from source: Windows needs nothing beyond Go; macOS needs the
 Xcode command-line tools; Linux needs the X11/GL/ALSA dev headers (the

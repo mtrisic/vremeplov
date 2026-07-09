@@ -500,7 +500,13 @@ ignored.
   core's gob format, interchangeable with headless
   `--snapshot-save/--snapshot-load` and the web buttons), and
   screenshots (`c` writes `vremeplov-shot-<frameseq>.png` via core's
-  `FramePNG`; active area or full frame per the `f` toggle). Buttons are
+  `FramePNG`; active area or full frame per the `f` toggle).
+  Clipboard: bracketed paste (one bubbletea `KeyMsg` with `Paste`)
+  types through `TypeText`, validated before queueing — no OS
+  clipboard access, works over SSH; with the monitor open the first
+  pasted line lands on the REPL input. `y` copies `ScreenText()` out
+  as an **OSC 52** escape written to the terminal (silently ignored
+  where unsupported, e.g. macOS Terminal.app). Buttons are
   color-coded by function on the 16-color ANSI palette (red =
   quit/armed recorder, gray = save states, blue = machine control,
   magenta = time machine, cyan = debugging, green = view/input
@@ -594,6 +600,12 @@ F5/F6 exchange `vremeplov-snap-N.gob` with every other frontend, F12
 writes `FramePNG`, F4 rewinds 2 s and repeats while held. The window
 close button arms a two-step confirmation (`SetWindowClosingHandled`);
 machine presses are swallowed while it asks, releases still land.
+Clipboard (`atotto/clipboard` — pure Go on Windows so the cgo-free
+cross-build survives; needs xclip/xsel on Linux): Cmd/Ctrl+V and
+footer *paste* type through `TypeText` (monitor open → REPL input),
+Cmd/Ctrl+C and footer *copy* put `ScreenText()` out. Meta chords
+never reach the matrix; Ctrl gives up only the V/C chords and remains
+REPT otherwise.
 
 **Monitor**: F9 docks the shared `core/monitor` session on the right —
 registers, disassembly at PC, watches, log, REPL with history — the
@@ -660,7 +672,8 @@ every frontend) · sound (cassette-port DAC → `RenderAudio` → Web Audio
 and Ebiten audio) · WASM page with
 canvas/keyboard/tape picker/recorder · native desktop GUI (Ebiten:
 window, drag-and-drop tapes, sound on by default, footer chrome,
-docked monitor) · headless everything.
+docked monitor) · copy-paste (paste-to-type in browser/desktop/TUI;
+screen-text copy in desktop/TUI) · headless everything.
 
 ## 9. Sources
 
