@@ -58,6 +58,10 @@ jobs:
             echo "VSCE_PAT secret not set — skipping VS Code Marketplace publish"
           fi
           if [ -n "$OVSX_PAT" ]; then
+            # Open VSX needs the namespace to exist first (the VS Code
+            # Marketplace creates it implicitly; Open VSX does not).
+            # Harmless once it exists — tolerate the "already owned" error.
+            npx --yes ovsx create-namespace mtrisic -p "$OVSX_PAT" || true
             for f in dist/*.vsix; do npx --yes ovsx publish "$f" -p "$OVSX_PAT"; done
           else
             echo "OVSX_PAT secret not set — skipping Open VSX publish"
