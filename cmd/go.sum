@@ -1,2 +1,4 @@
+github.com/google/go-dap v0.12.0 h1:rVcjv3SyMIrpaOoTAdFDyHs99CwVOItIJGKLQFQhNeM=
+github.com/google/go-dap v0.12.0/go.mod h1:tNjCASCm5cqePi/RVXXWEVqtnNLV1KTWtYOqu6rZNzc=
 github.com/mtrisic/gozilog v1.1.1 h1:XVWZfbIoWyb2naA+PWit3ZKNOjRzifI/baap1TyO83o=
 github.com/mtrisic/gozilog v1.1.1/go.mod h1:RcXzUQNZkf3IwtgLEkMZOFFbySY2cx/JywfKiVqze+k=

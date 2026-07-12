@@ -623,6 +623,40 @@ windows (CGO_ENABLED=0) binaries. The window itself cannot open in the
 container; graphical verification happens on the host, like browser
 testing for wasm.
 
+### 5.5 `cmd/dap` (editor debugging via the Debug Adapter Protocol)
+
+`vremeplov-dap` (pure Go; `github.com/google/go-dap` types+codec in
+the cmd module — core purity untouched) hosts a machine and serves one
+DAP session over stdio (default) or `--listen` TCP, which covers
+VS Code, Helix, nvim-dap, and friends. One goroutine owns the machine;
+request handlers marshal through a command channel, and while running
+the engine executes real-time-paced one-frame `RunDebug` slices (pause
+latency ≤ 20 ms, screen view live, breakpoint stops classified into
+DAP stopped events via the temp-breakpoint bookkeeping).
+
+Launch: a `.gtp`/`.wav` (fast-load + typed RUN, optional entry
+breakpoint) or a raw `.bin` (`org` + `entry`, PC set via
+`CPU().SetState` + `HistoryRebase` — the monitor's `set` discipline).
+Source-level debugging parses sjasmplus `--sld` maps (`sld.go`:
+T-records line↔address, L-records labels; pages ignored — unbanked
+64 K): verified source breakpoints, source-annotated stack frame and
+disassembly, line-granularity stepping, `entry` by label. Deliberate
+v1 semantics: step-over classifies the instruction (only CALL/RST/
+DJNZ/HALT/block-repeats arm a run-to at PC+len — a blind PC+len
+breakpoint would run away on taken jumps); step-out targets the word
+at (SP) (the standard 8-bit heuristic); `stepBack` = `StepBack`, and
+`reverseContinue` rewinds to the previous recorded stop
+(`EnableHistory` at launch; `history:0` disables with clean errors);
+the debug console (`evaluate`) is the shared monitor REPL verbatim,
+with a synthetic stopped event when a console command moves the
+machine; data breakpoints are not advertised (console watchpoints
+cover it; hits still stop with reason "data breakpoint"). An optional
+HTTP screen view (`/screen.png` at 10 Hz + `/screen.txt`) is announced
+as a DAP output event — editor-agnostic by construction. The whole
+protocol surface is tested in-process over `net.Pipe` with exact
+PC/memory assertions (determinism); fixtures are hand-assembled
+(`cmd/dap/testdata`, mirrored in `examples/asm/`).
+
 ## 6. Development environment
 
 All development, building, and verification happens **inside the devcontainer**.

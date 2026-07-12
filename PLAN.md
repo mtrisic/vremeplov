@@ -22,6 +22,11 @@ reviewed before the next began. What exists today:
   the shared debugger engine every live frontend embeds.
 - `cmd/headless` — the primary harness: frame/memory dumps, key scripts,
   tape/fast-load/typed program input, snapshots; golden-tested.
+- `cmd/dap` — `vremeplov-dap`, the Debug Adapter Protocol server for
+  editor debugging (VS Code extension in `editors/vscode`, Helix via
+  languages.toml): source-level breakpoints from sjasmplus SLD maps,
+  reverse stepping on the rewind history, monitor REPL on the debug
+  console, optional HTTP screen view. See SPEC §5.5.
 - `frontends/tui` — bubbletea frontend with adaptive renderers
   (half-block/quadrant/braille/text/scaled), sticky keys, Ctrl+X chrome,
   clipboard (bracketed paste in, OSC 52 screen-text copy out), and the
@@ -128,6 +133,22 @@ Conditional breakpoints (`b ADDR if REG=VAL`), ROM symbol names in the
 disassembly window (sourced from Šolc's commented disassembly), a T-state
 profiler/heatmap, and — once rewind lands — reverse-step in the monitor.
 All contained in `core/debug.go` + `core/monitor`.
+
+DAP phase 2 (`cmd/dap` shipped v1 — see SPEC §5.5): data breakpoints
+via `dataBreakpointInfo(asAddress)` → core watchpoints, goto ("jump to
+cursor") via SLD + SetState, hover/watch evaluation (SLD labels,
+registers), z88dk `.lis` listing maps besides sjasmplus SLD,
+caller-frame heuristics in stackTrace, a desktop-frontend `--dap` mode
+(debug with the real window instead of the HTTP screen view).
+
+DAP phase 3 — **debugging in vscode.dev** (browser-only VS Code): the
+core is already js/wasm-proven, so compile the adapter to wasm and run
+it in the web extension host as a `DebugAdapterInlineImplementation`
+(no processes in the browser). Needs: program/SLD bytes handed over
+via `workspace.fs` instead of os.ReadFile, the screen in a webview
+panel instead of the HTTP server, no TCP. Weak link is assembling —
+sjasmplus has no wasm build; debugging prebuilt binaries works fully
+client-side.
 
 ### 5. Exotic: microphone tape loading (web)
 

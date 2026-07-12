@@ -25,13 +25,38 @@ jobs:
           go-version: "1.26"
           cache-dependency-path: go.work.sum
 
-      - name: Test (core + tui)
+      - name: Test (core + tui + cmd)
         run: |
           (cd core && go test ./...)
           (cd frontends/tui && go test ./...)
+          (cd cmd && go test ./...)
 
-      - name: Build release binaries
-        run: bash tools/build-tui.sh dist
+      - name: Build release binaries (tui + dap)
+        run: |
+          bash tools/build-tui.sh dist
+          bash tools/build-dap.sh dist
+
+      - name: Package VS Code extension (binary bundled per platform)
+        run: bash tools/build-vsix.sh dist
+        env:
+          VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+
+      - name: Publish extension to marketplaces (tag runs, if tokens present)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -n "$VSCE_PAT" ]; then
+            for f in dist/*.vsix; do npx --yes @vscode/vsce publish --packagePath "$f" -p "$VSCE_PAT"; done
+          else
+            echo "VSCE_PAT secret not set — skipping VS Code Marketplace publish"
+          fi
+          if [ -n "$OVSX_PAT" ]; then
+            for f in dist/*.vsix; do npx --yes ovsx publish "$f" -p "$OVSX_PAT"; done
+          else
+            echo "OVSX_PAT secret not set — skipping Open VSX publish"
+          fi
         env:
           # On tag runs, name deliverables after the exact tag that
           # triggered the release; otherwise the scripts fall back to

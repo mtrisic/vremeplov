@@ -7,7 +7,10 @@ require (
 	github.com/mtrisic/vremeplov/roms v0.0.0-00010101000000-000000000000
 )
 
-require github.com/mtrisic/gozilog v1.1.1 // indirect
+require (
+	github.com/google/go-dap v0.12.0 // indirect
+	github.com/mtrisic/gozilog v1.1.1 // indirect
+)
 
 // Intra-repo modules are unpublished; resolve them relatively (works in
 // both module and workspace mode, no network).

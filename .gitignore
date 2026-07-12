@@ -18,6 +18,12 @@
 # Delve debug binaries (VSCode F5)
 __debug_bin*
 
+# VS Code extension packaging artifacts (tools/build-vsix.sh bundles the
+# adapter binary into editors/vscode/bin transiently, then packages .vsix)
+/editors/vscode/bin/
+*.vsix
+/cmd/dap/dap
+
 # Digitized cassette audio stays out of the repo — the committed .gtp
 # images (credits in examples/PROVENANCE.md) are the canonical form.
 /examples/*.wav

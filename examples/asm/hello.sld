@@ -1,0 +1,10 @@
+|SLD.data.version|1
+hello.asm|5||0|-1|32768|T|
+hello.asm|5||0|-1|32768|L|,start
+hello.asm|6||0|-1|32771|T|
+hello.asm|6||0|-1|32771|L|,after
+hello.asm|7||0|-1|32772|T|
+hello.asm|10||0|-1|32776|T|
+hello.asm|10||0|-1|32776|L|,fill
+hello.asm|11||0|-1|32778|T|
+hello.asm|12||0|-1|32781|T|

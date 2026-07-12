@@ -26,6 +26,11 @@
   dump/poke — in the terminal, the browser, and the desktop app.
 - **A real time machine** — hold rewind and the machine runs backwards;
   the debugger single-steps in reverse, too.
+- **Debug in your own editor** — a Debug Adapter Protocol server
+  (`vremeplov-dap`) brings breakpoints, stepping (both directions!),
+  registers, memory, and disassembly to VS Code, Helix, and any other
+  DAP editor — source-level for your own assembly (sjasmplus), and
+  disassembly-level for any existing Galaksija program.
 - **Cassette-port sound** — the Galaksija had no sound chip, so games
   told you to plug a speaker into the tape port; the browser's Sound
   button is that speaker, and the desktop app has it plugged in from
@@ -66,6 +71,7 @@
 [Loading programs](#loading-programs) ·
 [Recording tapes](#recording-tapes) ·
 [Debugging](#debugging-a-galaksija-program) ·
+[Editor debugging](#debugging-in-your-editor) ·
 [Release builds](#release-builds) ·
 [Layout](#layout) ·
 [Development notes](#development-notes) ·
@@ -323,6 +329,8 @@ format selector).
   desktop app, or the *Monitor* button in the web emulator opens the
   monitor: breakpoints, watchpoints, stepping, disassembly, hex
   dump/poke (see [Terminal](#terminal-frontendstui) above).
+- **In your editor** — see
+  [Debugging in your editor](#debugging-in-your-editor) below.
 - `--screen-text` prints the decoded screen; `--dump-frame` renders the real
   pixels (the two can disagree — the pixel pipeline is the truth).
 - `--dump-mem out.bin:0x2800-0x3000` slices memory. Note it reads through the
@@ -335,10 +343,71 @@ format selector).
 - BASIC program text lives at 0x2C3A (pointers at 0x2C36/0x2C38); video RAM
   is 0x2800–0x29FF.
 
+## Debugging in your editor
+
+`vremeplov-dap` (in `cmd/dap`, prebuilt on the releases page) is a
+**Debug Adapter Protocol** server hosting a Galaksija — so any DAP
+editor debugs Z80 programs running in the emulator with its native UI:
+breakpoints, stepping, registers and flags, a live memory view, and
+disassembly. Two headline tricks:
+
+- **Step backwards.** The adapter rides the time machine:
+  `stepBack`/`reverseContinue` are real, exact, and undo memory writes.
+- **The debug console is the monitor.** Type any monitor command
+  (`help`, `x 2800`, `w 9000 w`, `poke`, …) at the debug console.
+
+Write your own assembly with source-level debugging (assemble with
+[sjasmplus](https://github.com/z00m128/sjasmplus): `--raw=prog.bin
+--sld=prog.sld`), or debug **any existing `.gtp`** at the disassembly
+level. An optional `"screen"` address serves the live Galaksija
+display at a local URL — open it in a browser next to your editor.
+A ready-made example lives in [examples/asm](examples/asm/).
+
+**VS Code**: install the **Galaksija Debug** extension — the
+platform-specific packages on the
+[releases page](https://github.com/mtrisic/vremeplov/releases) (and
+the marketplace) **bundle the adapter**, so the extension is all you
+need. (Source: [editors/vscode](editors/vscode/);
+`tools/build-vsix.sh` builds the bundled packages.) Then:
+
+```json
+{
+  "type": "galaksija", "request": "launch", "name": "Debug prog.asm",
+  "program": "${workspaceFolder}/build/prog.bin", "org": "0x8000",
+  "sld": "${workspaceFolder}/build/prog.sld", "screen": "127.0.0.1:8390"
+}
+```
+
+**Helix** (no extension needed — Helix speaks DAP natively), in
+`languages.toml`:
+
+```toml
+[[language]]
+name = "z80asm"  # or attach the debugger to your asm language entry
+[language.debugger]
+name = "vremeplov-dap"
+transport = "stdio"
+command = "vremeplov-dap"
+
+[[language.debugger.templates]]
+name = "binary"
+request = "launch"
+completion = [ { name = "binary", completion = "filename" } ]
+args = { program = "{0}", org = "0x8000", sld = "build/prog.sld", screen = "127.0.0.1:8390" }
+```
+
+Launch arguments: `program` (.gtp/.wav/.bin) · `org` (bin load
+address) · `entry` (address **or SLD label**) · `sld` + `sourceRoot` ·
+`ram`/`rom` · `stopOnEntry` · `history` (rewind seconds for reverse
+debugging, default 30) · `screen`. Data breakpoints aren't in v1 —
+set watchpoints from the debug console (`w ADDR[-END] r|w|rw`); hits
+still stop the editor with a proper reason.
+
 ## Release builds
 
-`tools/build-tui.sh` cross-compiles the terminal frontend (pure Go, so no
-toolchains beyond Go itself):
+`tools/build-tui.sh` cross-compiles the terminal frontend, and
+`tools/build-dap.sh` the debug adapter (both pure Go, so no toolchains
+beyond Go itself):
 
 ```sh
 bash tools/build-tui.sh              # dist/: linux amd64+arm64, macOS amd64+arm64, windows 386
@@ -367,11 +436,13 @@ page to GitHub Pages on every push to `main`.
 | `core/loader/` | Shared tape-image → running-program glue |
 | `roms/` | Committed ROM images + embedded accessors ([roms/PROVENANCE.md](roms/PROVENANCE.md)) |
 | `cmd/headless` | Headless runner — the primary test harness |
+| `cmd/dap` | Debug Adapter Protocol server (`vremeplov-dap`) for editor debugging |
 | `frontends/tui` | Terminal frontend (bubbletea) |
 | `frontends/desktop` | Desktop frontend (Ebiten — the repo's only cgo user) |
 | `frontends/wasm` | Web frontend (canvas + `syscall/js`) |
 | `web/` | Static page for the web frontend |
-| `examples/` | BASIC listings + preserved `.gtp` games ([credits](examples/PROVENANCE.md)) |
+| `editors/vscode` | VS Code extension declaring the `galaksija` debug type |
+| `examples/` | BASIC listings, preserved `.gtp` games ([credits](examples/PROVENANCE.md)), asm demo |
 | `tools/` | Build/check scripts, static server, smoke tests |
 
 ## Development notes

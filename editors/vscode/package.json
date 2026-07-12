@@ -1,0 +1,129 @@
+{
+  "name": "vremeplov-galaksija-debug",
+  "displayName": "Galaksija Debug (Vremeplov)",
+  "description": "Debug Galaksija Z80 programs inside the Vremeplov emulator — breakpoints, stepping in both directions, registers, memory, disassembly, and the monitor REPL on the debug console.",
+  "version": "0.1.0",
+  "publisher": "mtrisic",
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": { "type": "git", "url": "https://github.com/mtrisic/vremeplov" },
+  "bugs": { "url": "https://github.com/mtrisic/vremeplov/issues" },
+  "homepage": "https://github.com/mtrisic/vremeplov#readme",
+  "keywords": ["galaksija", "z80", "emulator", "debugger", "retro", "assembly"],
+  "galleryBanner": { "color": "#111111", "theme": "dark" },
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Debuggers"],
+  "activationEvents": ["onDebugResolve:galaksija"],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "z80asm",
+        "extensions": [".asm", ".z80", ".s"],
+        "aliases": ["Z80 Assembly"]
+      }
+    ],
+    "breakpoints": [{ "language": "z80asm" }],
+    "debuggers": [
+      {
+        "type": "galaksija",
+        "label": "Galaksija (Vremeplov)",
+        "languages": ["z80asm"],
+        "configurationAttributes": {
+          "launch": {
+            "required": ["program"],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "A .gtp/.wav tape image, or a raw .bin (needs org)."
+              },
+              "org": {
+                "type": ["string", "number"],
+                "description": "Load address for a raw .bin, e.g. \"0x8000\"."
+              },
+              "entry": {
+                "type": ["string", "number"],
+                "description": "Start PC (bin) or entry breakpoint (tape); an SLD label name works too. Default: org / first tape section."
+              },
+              "sld": {
+                "type": "string",
+                "description": "sjasmplus --sld source map for source-level debugging."
+              },
+              "sourceRoot": {
+                "type": "string",
+                "description": "Base directory for relative SLD paths (default: the SLD file's directory)."
+              },
+              "ram": {
+                "type": "string",
+                "enum": ["2", "4", "6", "expanded"],
+                "description": "RAM size. Default: expanded for .bin, 6 for tapes."
+              },
+              "rom": {
+                "type": "string",
+                "enum": ["v28", "v29"],
+                "description": "ROM A version (v29 pulls the embedded ROM B)."
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Stop at the entry before running. Default: true for .bin, false for tapes."
+              },
+              "history": {
+                "type": "number",
+                "description": "Seconds of rewind history for reverse debugging (default 30; 0 disables)."
+              },
+              "screen": {
+                "type": "string",
+                "description": "Serve the live Galaksija screen on this HTTP address, e.g. \"127.0.0.1:8390\"."
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "galaksija",
+            "request": "launch",
+            "name": "Debug Z80 binary",
+            "program": "${workspaceFolder}/build/prog.bin",
+            "org": "0x8000",
+            "sld": "${workspaceFolder}/build/prog.sld",
+            "screen": "127.0.0.1:8390"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Galaksija: debug an assembled binary (with source)",
+            "body": {
+              "type": "galaksija",
+              "request": "launch",
+              "name": "Debug ${1:prog}.asm",
+              "program": "^\"\\${workspaceFolder}/build/${1:prog}.bin\"",
+              "org": "0x8000",
+              "sld": "^\"\\${workspaceFolder}/build/${1:prog}.sld\"",
+              "screen": "127.0.0.1:8390"
+            }
+          },
+          {
+            "label": "Galaksija: debug a tape image (.gtp)",
+            "body": {
+              "type": "galaksija",
+              "request": "launch",
+              "name": "Debug ${1:game}.gtp",
+              "program": "^\"\\${workspaceFolder}/${1:game}.gtp\"",
+              "screen": "127.0.0.1:8390"
+            }
+          }
+        ]
+      }
+    ],
+    "configuration": {
+      "title": "Galaksija Debug",
+      "properties": {
+        "galaksija.dapPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the vremeplov-dap binary. Empty: vremeplov-dap on PATH."
+        }
+      }
+    }
+  }
+}
